@@ -9,10 +9,9 @@ A continuación se presentan 5 enunciados de consultas basados en las coleccione
 **Consulta MongoDB:**
 ```javascript
 db.clientes.aggregate([
-  // Desenrolla las cuentas de cada cliente
+ 
   { $unwind: "$cuentas" },
-  
-  // Agrupa por tipo de cuenta y calcula los indicadores
+
   {
     $group: {
       _id: "$cuentas.tipo_cuenta",
@@ -23,8 +22,7 @@ db.clientes.aggregate([
       cantidad_cuentas: { $sum: 1 }
     }
   },
-  
-  // Proyecta los resultados con nombres legibles
+ 
   {
     $project: {
       _id: 0,
@@ -47,7 +45,6 @@ db.clientes.aggregate([
 **Consulta MongoDB:**
 ```javascript
 db.transacciones.aggregate([
-  // Agrupar por cliente y tipo de transacción
   {
     $group: {
       _id: {
@@ -59,7 +56,6 @@ db.transacciones.aggregate([
     }
   },
 
-  // Reorganizar para agrupar por cliente
   {
     $group: {
       _id: "$_id.cliente",
@@ -73,7 +69,6 @@ db.transacciones.aggregate([
     }
   },
 
-  // Unir con la colección de clientes
   {
     $lookup: {
       from: "clientes",
@@ -84,7 +79,6 @@ db.transacciones.aggregate([
   },
   { $unwind: "$cliente" },
 
-  // Proyección final
   {
     $project: {
       _id: 0,
@@ -105,13 +99,13 @@ db.transacciones.aggregate([
 **Consulta MongoDB:**
 ```javascript
 db.clientes.aggregate([
-  // Desenrollamos las cuentas
+ 
   { $unwind: "$cuentas" },
-  // Desenrollamos las tarjetas dentro de cada cuenta
+
   { $unwind: "$cuentas.tarjetas" },
-  // Filtramos solo las tarjetas de crédito
+
   { $match: { "cuentas.tarjetas.tipo_tarjeta": "credito" } },
-  // Agrupamos por cliente para contar tarjetas y recolectar sus datos
+
   {
     $group: {
       _id: "$_id",
@@ -130,13 +124,13 @@ db.clientes.aggregate([
       }
     }
   },
-  // Nos quedamos solo con los clientes que tienen más de una tarjeta de crédito
+ 
   {
     $match: {
       cantidad_tarjetas_credito: { $gt: 1 }
     }
   },
-  // Proyección final ordenada
+
   {
     $project: {
       _id: 0,
@@ -159,21 +153,21 @@ db.clientes.aggregate([
 **Consulta MongoDB:**
 ```javascript
 db.transacciones.aggregate([
-  // Filtramos solo los depósitos con medio de pago definido
+
   {
     $match: {
       tipo_transaccion: "deposito",
       "detalles_deposito.medio_pago": { $exists: true, $ne: null }
     }
   },
-  // Extraemos el año y mes
+ 
   {
     $addFields: {
       mes: { $month: "$fecha" },
       anio: { $year: "$fecha" }
     }
   },
-  // Agrupamos por año, mes y medio de pago
+ 
   {
     $group: {
       _id: {
@@ -185,7 +179,7 @@ db.transacciones.aggregate([
       monto_total: { $sum: "$monto" }
     }
   },
-  // Ordenamos para visualización clara
+  
   {
     $sort: {
       "_id.anio": 1,
@@ -193,7 +187,7 @@ db.transacciones.aggregate([
       cantidad: -1
     }
   },
-  // Proyección final legible
+
   {
     $project: {
       _id: 0,
@@ -215,13 +209,13 @@ db.transacciones.aggregate([
 **Consulta MongoDB:**
 ```javascript
 db.transacciones.aggregate([
-  // Filtrar solo retiros
+ 
   {
     $match: {
       tipo_transaccion: "retiro"
     }
   },
-  // Crear campo con la fecha (solo año-mes-día, sin hora)
+
   {
     $addFields: {
       fecha_dia: {
@@ -229,7 +223,7 @@ db.transacciones.aggregate([
       }
     }
   },
-  // Agrupar por cuenta y día
+ 
   {
     $group: {
       _id: {
@@ -240,14 +234,14 @@ db.transacciones.aggregate([
       monto_total: { $sum: "$monto" }
     }
   },
-  // Filtrar casos sospechosos
+
   {
     $match: {
       cantidad_retiros: { $gt: 3 },
       monto_total: { $gt: 1000000 }
     }
   },
-  // Enriquecer con información del cliente si se desea
+
   {
     $lookup: {
       from: "clientes",
@@ -257,7 +251,7 @@ db.transacciones.aggregate([
     }
   },
   { $unwind: "$cliente" },
-  // Proyección final
+ 
   {
     $project: {
       _id: 0,
